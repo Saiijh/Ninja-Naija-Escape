@@ -195,4 +195,6 @@ addEventListener('resize',resize);addEventListener('error',function(e){showErr(e
 window.__g={press:function(a){a==2?pressT():a?pressS():pressJ()},get:function(k){return eval(k)},set:function(k,v){eval(k+'=v')},start:start,upd:upd,draw:draw,intro:intro,chapter:chapter,reset:reset};
 resize();load();intro();loop();
 })();
+</script><script>
+setTimeout(function(){var d=document.createElement('pre');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#000;color:#0f0;font-size:12px;white-space:pre-wrap;margin:0;padding:6px';d.textContent='sdk='+!!window.Vatar;document.body.appendChild(d);if(window.Vatar){Vatar.init().then(function(r){d.textContent+=' init OK '+r.mode}).catch(function(e){d.textContent+=' init error: '+(e&&e.code||e)})}},1500)
 </script></body></html>
