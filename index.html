@@ -196,36 +196,37 @@ window.__g={press:function(a){a==2?pressT():a?pressS():pressJ()},get:function(k)
 resize();load();intro();loop();
 })();
 </script><script>
-setTimeout(function(){var d=document.createElement('pre');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#000;color:#0f0;font-size:12px;white-space:pre-wrap;margin:0;padding:6px';d.textContent='sdk='+!!window.Vatar;document.body.appendChild(d);if(window.Vatar){Vatar.init().then(function(r){d.textContent+=' init OK '+r.mode}).catch(function(e){d.textContent+=' init error: '+(e&&e.code||e)})}},1500)
+setTimeout(function(){var d=document.createElement('pre');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#000;color:#0f0;font-size:12px;white-space:pre-wrap;margin:0;padding:6px;pointer-events:none';d.textContent='sdk='+!!window.Vatar;document.body.appendChild(d);if(window.Vatar){Vatar.init().then(function(r){d.textContent+=' init OK '+r.mode}).catch(function(e){d.textContent+=' init error: '+(e&&e.code||e)})}},1500)
 </script><script>
 (function(){
-var G=window.__g,V=window.Vatar;if(!G)return;
+var G=window.__g;if(!G)return;
 var ITEMS=[
 {id:'shuriken_pack',name:'5 Shuriken',desc:'Added to your next run',price:100},
 {id:'armor_plate',name:'Armor Plate',desc:'Blocks 3 hits in one run',price:300},
 {id:'slow_mo',name:'Slow Motion',desc:'Slows the game for 10 seconds',price:200}];
-var inv={shuriken_pack:0,armor_plate:0,slow_mo:0},seenP={},armor=0,slowUntil=0;
+var inv={shuriken_pack:0,armor_plate:0,slow_mo:0},seenP={},armor=0,slowUntil=0,hooked=0;
 try{var sv=JSON.parse(localStorage.getItem('nne_shop')||'{}');if(sv.inv)inv=Object.assign(inv,sv.inv);if(sv.seen)seenP=sv.seen}catch(e){}
 function save(){try{localStorage.setItem('nne_shop',JSON.stringify({inv:inv,seen:seenP}))}catch(e){}}
 function say(m){G.set('bn',m);G.set('bt',110)}
-function grant(p){if(!p||seenP[p.purchaseId])return;seenP[p.purchaseId]=1;inv[p.productId]=(inv[p.productId]||0)+1;save();render();msg('Bought! Check your items.')}
+function grant(p){if(!p||seenP[p.purchaseId])return;seenP[p.purchaseId]=1;inv[p.productId]=(inv[p.productId]||0)+1;save();render();msg('Bought! id: '+p.purchaseId)}
 function mk(tag,css){var e=document.createElement(tag);e.style.cssText=css;document.body.appendChild(e);return e}
-var shopb=mk('button','position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;padding:11px 22px;border-radius:99px;border:2px solid #f2b705;background:#2a2147;color:#fff;font:700 14px system-ui');shopb.textContent='🛒 SHOP';
-var slowb=mk('button','position:fixed;left:10px;top:150px;z-index:60;padding:10px 12px;border-radius:12px;border:2px solid #53e0e0;background:rgba(42,33,71,.8);color:#fff;font:700 12px system-ui;display:none');
+var shopb=mk('button','position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;padding:11px 22px;border-radius:99px;border:2px solid #f2b705;background:#2a2147;color:#fff;font:700 14px system-ui;width:auto;margin:0');shopb.textContent='🛒 SHOP';
+var slowb=mk('button','position:fixed;left:10px;top:150px;z-index:60;padding:10px 12px;border-radius:12px;border:2px solid #53e0e0;background:rgba(42,33,71,.8);color:#fff;font:700 12px system-ui;display:none;width:auto;margin:0');
 var panel=mk('div','position:fixed;inset:0;z-index:70;background:rgba(10,7,20,.94);display:none;overflow:auto;padding:14px;box-sizing:border-box;color:#f4efe6;font:14px system-ui');
 function msg(m){var e=document.getElementById('shopmsg');if(e)e.textContent=m}
 function render(){var h='<div style="max-width:440px;margin:auto"><h2 style="margin:4px 0 10px;color:#f2b705">SHOP</h2>';
 ITEMS.forEach(function(it){h+='<div style="background:#1b1530;border:2px solid #f2b705;border-radius:12px;padding:12px;margin-bottom:10px"><b>'+it.name+'</b> · ₦'+it.price+'<br><span style="color:#b7b0c9">'+it.desc+' · You have: '+inv[it.id]+'</span><br><button data-id="'+it.id+'" style="margin-top:8px;width:100%;padding:11px;border:0;border-radius:10px;background:#c0261e;color:#fff;font:700 14px system-ui">Buy</button></div>'});
-h+='<p id="shopmsg" style="color:#ffd34d;min-height:18px"></p><button id="shopx" style="width:100%;padding:11px;border-radius:10px;border:2px solid #f4efe6;background:#2a2147;color:#fff;font:700 14px system-ui">Close</button></div>';
+h+='<p id="shopmsg" style="color:#ffd34d;min-height:18px;word-break:break-all"></p><button id="shopx" style="width:100%;padding:11px;border-radius:10px;border:2px solid #f4efe6;background:#2a2147;color:#fff;font:700 14px system-ui">Close</button></div>';
 panel.innerHTML=h;
 panel.querySelectorAll('[data-id]').forEach(function(b){b.onclick=function(){buy(b.getAttribute('data-id'),b)}});
 panel.querySelector('#shopx').onclick=function(){panel.style.display='none'};
 slowb.textContent='⏱ SLOW x'+inv.slow_mo}
-function buy(id,b){if(!V){msg('Open the game inside Lagos Life to buy.');return}b.disabled=true;msg('Opening payment…');
-V.purchase(id).then(grant).catch(function(e){msg('Not bought: '+(e&&e.code||e))}).then(function(){b.disabled=false})}
+function hook(){var V=window.Vatar;if(!V||hooked)return;hooked=1;try{V.onPurchase(grant);V.purchases().then(function(l){l.forEach(grant)}).catch(function(){})}catch(e){}}
+function buy(id,b){var V=window.Vatar;if(!V){msg('Vatar SDK not found');return}hook();b.disabled=true;msg('Opening payment…');
+V.purchase(id).then(grant).catch(function(e){msg('Not bought: '+(e&&(e.code||e.message)||e))}).then(function(){b.disabled=false})}
 shopb.onclick=function(){render();panel.style.display='block'};
 slowb.onclick=function(){if(inv.slow_mo<1||Date.now()<slowUntil)return;inv.slow_mo--;slowUntil=Date.now()+10000;save();render();say('Slow motion!')};
-if(V){try{V.onPurchase(grant);V.purchases().then(function(l){l.forEach(grant)}).catch(function(){})}catch(e){}}
+hook();setInterval(hook,1000);
 var prev='',lastHits=0,lastLead=100;
 function tick(){requestAnimationFrame(tick);try{
 var st=G.get('st'),now=Date.now();
@@ -243,4 +244,4 @@ slowb.style.display=(st==='run'&&inv.slow_mo>0&&now>=slowUntil)?'block':'none';
 }catch(e){}}
 render();tick();
 })();
-                                                                                                                                                                      </script></body></html>
+</script></body></html>
