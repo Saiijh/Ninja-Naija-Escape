@@ -2,9 +2,11 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Ninja Naija: Escape</title>
+<script src="https://lagoslife.app/sdk/vatar-games-v1.js"></script>
 <style>
 html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0f0b1a;color:#f4efe6;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-user-select:none;user-select:none;touch-action:none;overscroll-behavior:none}
 canvas{position:fixed;left:0;top:0;display:block}
+#err{position:fixed;left:0;right:0;bottom:0;z-index:99;background:#7a1010;color:#fff;font:12px monospace;padding:6px 8px;display:none;pointer-events:none;word-break:break-all}
 #sat{position:fixed;left:0;top:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none}
 #ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(10,7,20,.74);overflow:auto;box-sizing:border-box}
 .card{background:#1b1530;border:2px solid #f2b705;border-radius:14px;padding:16px;max-width:440px;width:100%;text-align:center;box-shadow:0 5px 0 #f2b705;max-height:100%;overflow:auto;box-sizing:border-box}
@@ -16,7 +18,7 @@ button.go{background:#c0261e;border-color:#c0261e}
 .ctl{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(30vw,128px);height:min(30vw,128px);min-width:84px;min-height:84px;border-radius:50%;margin:0;padding:0;font-size:1.05rem;background:rgba(42,33,71,.62);border:3px solid rgba(244,239,230,.75);touch-action:none;display:none}
 #bt{right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(30px + max(84px,min(30vw,128px)) + env(safe-area-inset-bottom,0px));width:min(22vw,92px);height:min(22vw,92px);min-width:64px;min-height:64px;font-size:.85rem}.ctl:active{background:rgba(192,38,30,.8)}#bs{left:calc(16px + env(safe-area-inset-left,0px))}#bj{right:calc(16px + env(safe-area-inset-right,0px))}
 </style></head>
-<body><canvas id="c"></canvas><div id="sat"></div><div id="ov"></div>
+<body><canvas id="c"></canvas><div id="err"></div><div id="sat"></div><div id="ov"></div>
 <button class="ctl" id="bs">⬇<br>SLIDE</button><button class="ctl" id="bj">⬆<br>JUMP</button><button class="ctl" id="bt">✦<br>THROW</button>
 <script>
 (function(){
@@ -49,7 +51,8 @@ function chapter(n){if(CACHE[n])return CACHE[n];var c;
 function mk(n,hm,hM,wm,wM){var a=[],px=0;for(var i=0;i<n;i++){var w=rnd(wm,wM);a.push({x:px,w:w,h:rnd(hm,hM),s:Math.floor(rnd(0,9))});px+=w+rnd(4,16)}a.tw=px;return a}
 var L1=mk(40,50,130,50,90),L2=mk(34,70,200,60,110);
 function layer(a,par,col,wc){var off=cam*par;for(var i=0;i<a.length;i++){var b=a[i],bx=((b.x-off)%a.tw+a.tw)%a.tw-100;if(bx>Wd)continue;x.fillStyle=col;x.fillRect(bx,360-b.h-40,b.w,b.h+oy+60);x.fillStyle=wc;for(var j=0;j<b.w-8;j+=12)for(var k=0;k<b.h;k+=18)if((j*3+k*5+b.s)%7<2)x.fillRect(bx+5+j,330-b.h+k,4,6)}}
-function resize(){DPR=Math.min(2,window.devicePixelRatio||1);CW=window.innerWidth;CHh=window.innerHeight;cv.width=Math.round(CW*DPR);cv.height=Math.round(CHh*DPR);cv.style.width=CW+'px';cv.style.height=CHh+'px';S=Math.min(CHh/360,CW/480);Wd=CW/S;Hd=CHh/S;oy=(Hd-360)/2;PX=Math.min(170,Wd*.26);var s=$('sat');SAT=parseFloat(getComputedStyle(s).paddingTop)||0}
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);var w=window.innerWidth||document.documentElement.clientWidth||0,h=window.innerHeight||document.documentElement.clientHeight||0;if(w<50)w=360;if(h<50)h=640;CW=w;CHh=h;cv.width=Math.round(CW*DPR);cv.height=Math.round(CHh*DPR);cv.style.width=CW+'px';cv.style.height=CHh+'px';S=Math.min(CHh/360,CW/480);Wd=CW/S;Hd=CHh/S;oy=(Hd-360)/2;PX=Math.min(170,Wd*.26);var s=$('sat');SAT=parseFloat(getComputedStyle(s).paddingTop)||0}
+function showErr(e){var el=$('err');el.style.display='block';el.textContent='Error: '+(e&&e.message?e.message:e)+(e&&e.stack?' | '+String(e.stack).split('\n')[1]:'')}
 function load(){try{var s=JSON.parse(localStorage.getItem('nne')||'{}');chap=s.chap||1;bank=s.bank||0}catch(e){chap=1;bank=0}}
 function save(){try{localStorage.setItem('nne',JSON.stringify({chap:chap,bank:bank}))}catch(e){}}
 function pick(w){var s=0,k;for(k in w)s+=w[k];var r=Math.random()*(s+.2);for(k in w){if(r<w[k])return k;r-=w[k]}return null}
@@ -156,7 +159,7 @@ function hud(){x.setTransform(DPR,0,0,DPR,0,0);var tp=SAT+10,u=Math.max(12,Math.
  x.fillStyle='rgba(10,7,20,.6)';x.fillRect(CW-150,tp,140,60);x.fillStyle='#ffd34d';x.font='bold '+u+'px system-ui,sans-serif';x.fillText(f(coins*1000),CW-142,tp+19);x.fillStyle='#e8e8f0';x.font=(u-1)+'px system-ui,sans-serif';x.fillText('✦ shuriken: '+ammo,CW-142,tp+34);
  x.fillStyle=lead<30&&(t>>3)%2?'#fff':'#c0261e';x.fillRect(CW-142,tp+42,124*Math.max(0,lead)/100,8);x.fillStyle='#f4efe6';x.font='9px system-ui,sans-serif';x.fillText(C.chase.length>16?'CHASERS':C.chase,CW-142,tp+58);
  if(bt>0&&bn){x.globalAlpha=Math.min(1,bt/20);x.font='bold '+(u+1)+'px system-ui,sans-serif';var w=Math.min(CW-24,x.measureText(bn).width+34);x.fillStyle='rgba(10,7,20,.82)';x.fillRect(CW/2-w/2,tp+76,w,34);x.fillStyle='#f2b705';x.textAlign='center';x.fillText(bn.length*u*.55>CW-40?bn.slice(0,Math.floor((CW-60)/(u*.55)))+'…':bn,CW/2,tp+98);x.textAlign='left';x.globalAlpha=1}}
-function draw(){x.setTransform(DPR*S,0,0,DPR*S,0,oy*S*DPR);var g=x.createLinearGradient(0,-oy,0,360+oy),p=C.pal;g.addColorStop(0,p[0]);g.addColorStop(.6,p[1]);g.addColorStop(1,p[2]);x.fillStyle=g;x.fillRect(0,-oy-4,Wd+4,Hd+8);
+function draw(){if(!isFinite(oy)||!isFinite(S)||S<=0)resize();x.setTransform(DPR*S,0,0,DPR*S,0,oy*S*DPR);var g=x.createLinearGradient(0,-oy,0,360+oy),p=C.pal;g.addColorStop(0,p[0]);g.addColorStop(.6,p[1]);g.addColorStop(1,p[2]);x.fillStyle=g;x.fillRect(0,-oy-4,Wd+4,Hd+8);
  x.fillStyle='rgba(255,226,150,.85)';x.beginPath();x.arc(Math.min(Wd-90,470),200,58,0,6.3);x.fill();
  layer(L2,.15,C.l[0],'rgba(255,200,120,.35)');layer(L1,.35,C.l[1],'rgba(255,214,120,.5)');
  x.save();if(shake>.5)x.translate(rnd(-shake,shake),rnd(-shake,shake));
@@ -174,19 +177,21 @@ function card(h){ov.style.display='flex';ov.innerHTML='<div class="card">'+h+'</
 function btns(v){$('bs').style.display=$('bj').style.display=$('bt').style.display=v?'block':'none'}
 function fs(){try{var d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen().catch(function(){})}catch(e){}}
 function intro(){st='intro';btns(0);C=chapter(chap);reset();var rec=C.rec?'<p class="tag">RECURRENCE</p>':'';
- card('<p class="tag">CHAPTER '+chap+'</p><h1>'+C.n+'</h1>'+rec+'<p>'+C.b+'</p><p class="mut">⬆ JUMP (tap again in the air to double jump)<br>⬇ SLIDE under signs, or into enemies<br>✦ THROW shuriken at enemies ahead<br>Ropes: JUMP at the rope to swing across<br>Total earned: <b>'+f(bank)+'</b></p><button class="go" id="go">'+(chap>1?'Start chapter '+chap:'Run!')+'</button>'+(chap>1?'<button id="ng">New game from chapter 1</button>':''));
- $('go').onclick=function(){fs();start()};var ng=$('ng');if(ng)ng.onclick=function(){chap=1;bank=0;save();intro()}}
+ card((pl?'<p class="mut">Hi '+String(pl.name).replace(/[<>&]/g,'')+' 👋🏾</p>':'')+'<p class="tag">CHAPTER '+chap+'</p><h1>'+C.n+'</h1>'+rec+'<p>'+C.b+'</p><p class="mut">⬆ JUMP (tap again in the air to double jump)<br>⬇ SLIDE under signs, or into enemies<br>✦ THROW shuriken at enemies ahead<br>Ropes: JUMP at the rope to swing across<br>Total earned: <b>'+f(bank)+'</b></p><button class="go" id="go">'+(chap>1?'Start chapter '+chap:'Run!')+'</button>'+(chap>1?'<button id="ng">New game from chapter 1</button>':''));
+ $('go').onclick=function(){start()};var ng=$('ng');if(ng)ng.onclick=function(){chap=1;bank=0;save();intro()}}
 function start(){reset();ov.style.display='none';btns(1);st='run'}
-var LL={award:function(n){return Promise.resolve({ok:false,why:'Not connected yet. Waiting for Vatar test keys.'})}};
+var V=window.Vatar,pl=null,paused=0,frames=0;
+if(V){try{V.init().then(function(r){pl=r.player;if(st=='intro')intro()}).catch(function(){});V.onPause(function(){paused=1});V.onResume(function(){paused=0})}catch(e){}}
+function submit(){try{if(V&&V.submitScore)V.submitScore(Math.floor(bank/1000)).catch(function(){})}catch(e){}}
 function pay(win){return coins*1000+(win?60000+chap*15000:0)}
-function end(win,why){if(st=='dead'||st=='win')return;st=win?'win':'dead';btns(0);var p=pay(win);if(win){bank+=p;save()}var row=function(a,b){return '<tr><td>'+a+'</td><td>'+b+'</td></tr>'};
- card('<p class="tag">CHAPTER '+chap+'</p><h1>'+(win?'Mission complete! 🥷':'Mission failed')+'</h1><p class="mut">'+(win?C.n+' done.':why||'Try again.')+'</p><table>'+row('Distance',Math.round(dist)+(C.g=='survive'?'':' / '+C.len))+row('Coins',coins)+row('Hits taken',hits)+row('Time',Math.round(time/60)+'s')+row(win?'Payout':'Coins earned','<b>'+f(p)+'</b>')+'</table>'+(win?'<button class="go" id="nx">Next chapter ▶</button><button id="sd">Send payout to Lagos Life</button>':'<button class="go" id="rt">Try again</button>')+'<p class="mut" id="sm"></p>');
- var nx=$('nx');if(nx)nx.onclick=function(){chap++;save();intro()};var rt=$('rt');if(rt)rt.onclick=start;var sd=$('sd');if(sd)sd.onclick=function(){LL.award(p).then(function(r){$('sm').textContent=r.ok?'Sent!':r.why})}}
-function loop(){if(st=='run')upd();draw();requestAnimationFrame(loop)}
+function end(win,why){if(st=='dead'||st=='win')return;st=win?'win':'dead';btns(0);var p=pay(win);if(win){bank+=p;save();submit()}var row=function(a,b){return '<tr><td>'+a+'</td><td>'+b+'</td></tr>'};
+ card('<p class="tag">CHAPTER '+chap+'</p><h1>'+(win?'Mission complete! 🥷':'Mission failed')+'</h1><p class="mut">'+(win?C.n+' done.':why||'Try again.')+'</p><table>'+row('Distance',Math.round(dist)+(C.g=='survive'?'':' / '+C.len))+row('Coins',coins)+row('Hits taken',hits)+row('Time',Math.round(time/60)+'s')+row('Cash earned','<b>'+f(p)+'</b>')+'</table>'+(win?'<button class="go" id="nx">Next chapter ▶</button>':'<button class="go" id="rt">Try again</button>')+'<p class="mut" id="sm"></p>');
+ var nx=$('nx');if(nx)nx.onclick=function(){chap++;save();intro()};var rt=$('rt');if(rt)rt.onclick=start;}
+function loop(){requestAnimationFrame(loop);try{if(st=='run'&&!paused)upd();draw();if(++frames%30==0&&(window.innerWidth!==CW||window.innerHeight!==CHh))resize()}catch(e){showErr(e)}}
 ['bj','bs','bt'].forEach(function(id,i){$(id).addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();i==2?pressT():i?pressS():pressJ()})});
 cv.addEventListener('pointerdown',function(e){e.preventDefault();(e.clientX<CW/2)?pressS():pressJ()});
 addEventListener('keydown',function(e){var k=e.key.toLowerCase();if(k==' '||k=='arrowup'||k=='w')pressJ();if(k=='arrowdown'||k=='s')pressS();if(k=='x'||k=='f')pressT();if(k==' ')e.preventDefault()});
-addEventListener('resize',resize);addEventListener('orientationchange',function(){setTimeout(resize,150)});
+addEventListener('resize',resize);addEventListener('error',function(e){showErr(e.error||e.message)});try{if(window.ResizeObserver)new ResizeObserver(resize).observe(document.documentElement)}catch(e){}addEventListener('orientationchange',function(){setTimeout(resize,150)});
 window.__g={press:function(a){a==2?pressT():a?pressS():pressJ()},get:function(k){return eval(k)},set:function(k,v){eval(k+'=v')},start:start,upd:upd,draw:draw,intro:intro,chapter:chapter,reset:reset};
 resize();load();intro();loop();
 })();
